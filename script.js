@@ -19,8 +19,7 @@
         const minuteHand = document.getElementById('minuteHand');
         const secondHand = document.getElementById('secondHand');
         const clockNumbers = document.getElementById('clockNumbers');
-        const workTimeLabel = document.getElementById('workTimeLabel');
-        const breakTimeLabel = document.getElementById('breakTimeLabel');
+       
         
         // Create clock numbers (1-12)
         function createClockNumbers() {
@@ -84,7 +83,6 @@
                 remainingTime--;
                 totalSeconds++;
                 updateDisplay();
-                updateTotalTime();
                 updateClockAnimation();
                 updateClockHands();
                 
@@ -126,39 +124,66 @@
             timeDisplay.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
         }
         
-        function updateTotalTime() {
-            const hours = Math.floor(totalSeconds / 3600);
-            const minutes = Math.floor((totalSeconds % 3600) / 60);
-            const seconds = totalSeconds % 60;
-            totalTimeDisplay.textContent = `Total: ${hours}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
-        }
-        
         function updateClockVisuals() {
             // Clear existing divisions
             document.querySelectorAll('.clock-division').forEach(el => el.remove());
-            
-            // Calculate total minutes in the cycle (work + break)
-            const totalMinutes = workTime + breakTime;
-            
-            // Create work divisions (each division represents 5 minutes)
-            const workDivisions = Math.floor(workTime / 5);
-            for (let i = 0; i < workDivisions; i++) {
+
+            const minutesPerDivision = 5;
+            const degreesPerMinute = 360 / 60; // 6 degrees per minute
+            const degreesPerDivision = minutesPerDivision * degreesPerMinute;
+
+            // Work time breakdown
+            const fullWorkDivs = Math.floor(workTime / minutesPerDivision);
+            const workRemainder = workTime % minutesPerDivision;
+
+            // Break time breakdown
+            const fullBreakDivs = Math.floor(breakTime / minutesPerDivision);
+            const breakRemainder = breakTime % minutesPerDivision;
+
+            const clock = document.querySelector('.clock');
+            let currentAngle = 0;
+
+            // Work full divisions
+            for (let i = 0; i < fullWorkDivs; i++) {
                 const division = document.createElement('div');
                 division.className = 'clock-division work-division';
-                division.style.transform = `rotate(${i * 30}deg)`;
-                document.querySelector('.clock').appendChild(division);
+                division.style.transform = `rotate(${currentAngle}deg)`;
+                clock.appendChild(division);
+                currentAngle += degreesPerDivision;
             }
-            
-            // Create break divisions
-            const breakDivisions = Math.floor(breakTime / 5);
-            for (let i = 0; i < breakDivisions; i++) {
+
+            // Work partial division
+            if (workRemainder > 0) {
+                const partialAngle = workRemainder * degreesPerMinute;
+                const division = document.createElement('div');
+                division.className = 'clock-division work-division';
+                division.style.transform = `rotate(${currentAngle}deg)`;
+                division.style.clipPath = getClipPathForAngle(partialAngle);
+                clock.appendChild(division);
+                currentAngle += partialAngle;
+            }
+
+            // Break full divisions
+            for (let i = 0; i < fullBreakDivs; i++) {
                 const division = document.createElement('div');
                 division.className = 'clock-division break-division';
-                division.style.transform = `rotate(${(workDivisions + i) * 30}deg)`;
-                document.querySelector('.clock').appendChild(division);
+                division.style.transform = `rotate(${currentAngle}deg)`;
+                clock.appendChild(division);
+                currentAngle += degreesPerDivision;
             }
-            
-            // Show current mode sector (for the animation)
+
+            // Break partial division
+            if (breakRemainder > 0) {
+                const partialAngle = breakRemainder * degreesPerMinute;
+                const division = document.createElement('div');
+                division.className = 'clock-division break-division';
+                division.style.transform = `rotate(${currentAngle}deg)`;
+                division.style.clipPath = getClipPathForAngle(partialAngle);
+                clock.appendChild(division);
+                currentAngle += partialAngle;
+            }
+
+            // Show current mode sector (animated fill)
             if (currentMode === 'work') {
                 workSector.style.opacity = '1';
                 breakSector.style.opacity = '0';
@@ -167,7 +192,15 @@
                 breakSector.style.opacity = '1';
             }
         }
-        
+
+        // Helper to calculate clip-path for a given angle
+        function getClipPathForAngle(angleDeg) {
+            const angleRad = angleDeg * Math.PI / 180;
+            const x = 50 + 50 * Math.sin(angleRad);
+            const y = 50 - 50 * Math.cos(angleRad);
+            return `polygon(50% 50%, 50% 0%, ${x}% ${y}%)`;
+        }
+     
         function updateClockAnimation() {
             const total = currentMode === 'work' ? workTime * 60 : breakTime * 60;
             const angle = 360 * (1 - (remainingTime / total));
@@ -179,30 +212,26 @@
             }
         }
         
-        function updateClockHands() {
-            const total = currentMode === 'work' ? workTime * 60 : breakTime * 60;
-            const elapsed = total - remainingTime;
-            const percentage = elapsed / total;
-            
-            // Calculate angles (starting from the top)
-            const secondsAngle = percentage * 360;
-            const minutesAngle = percentage * 360;
-            const hoursAngle = percentage * 30; // 30 degrees per "hour" (30 min segment)
-            
-            // Apply rotation to clock hands
-            secondHand.style.transform = `rotate(${secondsAngle}deg)`;
-            minuteHand.style.transform = `rotate(${minutesAngle}deg)`;
-            hourHand.style.transform = `rotate(${hoursAngle}deg)`;
-        }
+           function updateClockHands() {
+    const elapsed = (currentMode === 'work' ? workTime * 60 : breakTime * 60) - remainingTime;
+
+    const seconds = elapsed % 60;
+    const minutes = Math.floor(elapsed / 60) % 60;
+    const hours = Math.floor(elapsed / 3600);
+
+    const secondsAngle = seconds * 6;         // 360 / 60
+    const minutesAngle = minutes * 6 + (seconds / 60) * 6; // smooth minute hand
+    const hoursAngle = (hours % 12) * 30 + (minutes / 60) * 30;
+
+    secondHand.style.transform = `rotate(${secondsAngle}deg)`;
+    minuteHand.style.transform = `rotate(${minutesAngle}deg)`;
+    hourHand.style.transform = `rotate(${hoursAngle}deg)`;
+}
         
-        function updateTimeLabels() {
-            workTimeLabel.textContent = workTime;
-            breakTimeLabel.textContent = breakTime;
-        }
-        
-        function selectRow(b, w) {
+
+       function selectRow(w, b) {
             if (isRunning) return;
-            
+
             breakTime = b;
             workTime = w;
             remainingTime = workTime * 60;
@@ -211,9 +240,19 @@
             updateDisplay();
             updateClockVisuals();
             updateClockHands();
-            highlightSelection(b, w);
             updateTimeLabels();
-        }
+
+            // Highlight selected option-btn
+            document.querySelectorAll('.option-btn').forEach(btn => btn.classList.remove('selected-row'));
+            const buttons = document.querySelectorAll('.option-btn');
+            buttons.forEach(btn => {
+                const work = btn.querySelector('.work-time')?.textContent;
+                const brk = btn.querySelector('.break-time')?.textContent;
+                if (parseInt(work) === w && parseInt(brk) === b) {
+                btn.classList.add('selected-row');
+                }
+            });
+            }
         
         function highlightSelection(b, w) {
             // Remove selection from all rows
