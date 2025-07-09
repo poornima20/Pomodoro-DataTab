@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Pomodoro Timer</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="container">
+    <div class="title-container">
+      <h1 class="title">POMODORO</h1>
+    </div>
+    
+    <div class="clock-section">
+      <div class="clock-container">
+        <div class="clock">
+          <div class="sector work-sector" id="workSector"></div>
+          <div class="sector break-sector" id="breakSector"></div>
+          <div class="clock-face"></div>
+          <div class="hand hour-hand" id="hourHand"></div>
+          <div class="hand minute-hand" id="minuteHand"></div>
+          <div class="hand second-hand" id="secondHand"></div>
+          <div class="clock-numbers" id="clockNumbers"></div>
+        </div>
+      </div>
+
+      <div class="time-display" id="timeDisplay">45:00</div>
+      <div class="mode-display" id="modeDisplay">Work</div>
+      <div class="total-time" id="totalTime">Total: 2:55:00</div>
+
+      <div class="buttons">
+        <button id="play-btn">PLAY ▶</button>
+        <button id="reset-btn">RESET ○</button>
+      </div>
+    </div>
+
+    <div class="settings">
+      <div class="time-labels">
+        <div class="time-label">
+          <div class="color-box work-color"></div>
+          <span>Work: <span id="workTimeLabel">45</span> min</span>
+        </div>
+        <div class="time-label">
+          <div class="color-box break-color"></div>
+          <span>Break: <span id="breakTimeLabel">15</span> min</span>
+        </div>
+      </div>
+
+      <table>
+        <tr><th>Break</th><th>Work</th></tr>
+        <tr onclick="selectRow(10, 30)"><td>10</td><td>30</td></tr>
+        <tr onclick="selectRow(5, 25)"><td>5</td><td>25</td></tr>
+        <tr onclick="selectRow(15, 45)"><td>15</td><td>45</td></tr>
+      </table>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
