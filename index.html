@@ -4,67 +4,40 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Pomodoro Timer</title>
-  <link rel="stylesheet" href="style.css" />
-  <link href="https://fonts.googleapis.com/css2?family=Pacifico&display=swap" rel="stylesheet">
-  <link href="https://fonts.googleapis.com/css2?family=Gloria+Hallelujah&display=swap" rel="stylesheet">
-  <link href="https://fonts.googleapis.com/css2?family=Patrick+Hand&display=swap" rel="stylesheet">
-
-
-
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <div class="container">
-
-      <h1 class="rainbow-title">POMODORO</h1>
-
-    <div class="clock-section">
-      <div class="clock-container">
-        <div class="clock">
-          <div class="sector work-sector" id="workSector"></div>
-          <div class="sector break-sector" id="breakSector"></div>
-          <div class="clock-face"></div>
-          <div class="hand hour-hand" id="hourHand"></div>
-          <div class="hand minute-hand" id="minuteHand"></div>
-          <div class="hand second-hand" id="secondHand"></div>
-          <div class="clock-numbers" id="clockNumbers"></div>
+ <div class="container">
+        <div class="timer-container">
+            <h2>Pomodoro Timer</h2>
+            <div class="status">Ready to work!</div>
+            <div class="timer-circle">25:00</div>
+            <div class="progress-container">
+                <div class="progress-bar"></div>
+            </div>
+            <div class="controls">
+                <button class="start-btn">Start</button>
+                <button class="reset-btn">Reset ↻</button>
+            </div>
+            <div class="presets">
+                <button class="preset-btn active" data-preset="25-5">25 | 5</button>
+                <button class="preset-btn" data-preset="30-10">30 | 10</button>
+                <button class="preset-btn" data-preset="45-15">45 | 15</button>
+                <button class="preset-btn" data-preset="1-1">Test 1 | 1</button>
+            </div>
+            <div class="session-counter">© 2025 Fullmoon</div>
         </div>
-      </div>
-
-      <div class="time-mode-wrapper">
-        <div class="mode-display" id="modeDisplay">Work</div>
-       <div class="time-display" id="timeDisplay">45:00</div>      
-      </div>
-
-      <div class="buttons">
-        <button class="three-d-button" id="play-btn">PLAY ▶</button>
-        <button class="three-d-button" id="reset-btn">RESET ○</button>
-      </div>
     </div>
-
-    <div class="settings">
-      <div class="button-set">
-      <div class="button-set-label">
-        <span class="work-label">Work</span>
-        <span class="break-label">Break</span>
-      </div>
-      
-      <button class="option-btn" onclick="selectRow(25, 5)">
-        <span class="work-time">25</span>
-        <span class="break-time">5</span>
-      </button>
-
-      <button class="option-btn" onclick="selectRow(30, 10)">
-        <span class="work-time">30</span>
-        <span class="break-time">10</span>
-      </button>
-
-      <button class="option-btn" onclick="selectRow(45, 15)">
-        <span class="work-time">45</span>
-        <span class="break-time">15</span>
-      </button>
+    
+    <!-- Modal for notifications -->
+    <div class="modal">
+        <div class="modal-content">
+            <div class="doodle">🎉</div>
+            <h2 class="modal-title">Time's up!</h2>
+            <p class="modal-message">Great job! Time for a break.</p>
+            <button class="close-modal">Let's go!</button>
+        </div>
     </div>
-    </div>
-  </div>
 
   <script src="script.js"></script>
 </body>

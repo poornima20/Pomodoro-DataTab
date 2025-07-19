@@ -1,268 +1,189 @@
-// Timer variables
-        let breakTime = 15;
-        let workTime = 45;
-        let totalSeconds = 0;
-        let remainingTime = workTime * 60;
-        let timerInterval;
-        let isRunning = false;
-        let currentMode = 'work'; // 'work' or 'break'
-        
-        // DOM elements
-        const timeDisplay = document.getElementById('timeDisplay');
-        const modeDisplay = document.getElementById('modeDisplay');
-        const totalTimeDisplay = document.getElementById('totalTime');
-        const playBtn = document.getElementById('play-btn');
-        const resetBtn = document.getElementById('reset-btn');
-        const workSector = document.getElementById('workSector');
-        const breakSector = document.getElementById('breakSector');
-        const hourHand = document.getElementById('hourHand');
-        const minuteHand = document.getElementById('minuteHand');
-        const secondHand = document.getElementById('secondHand');
-        const clockNumbers = document.getElementById('clockNumbers');
-       
-        
-        // Create clock numbers (1-12)
-        function createClockNumbers() {
-            const numbers = [12, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11];
-            const clock = document.querySelector('.clock');
-            const clockWidth = clock.offsetWidth;
-            const radius = clockWidth * 0.4;
-            const center = clockWidth / 2;
+document.addEventListener('DOMContentLoaded', function() {
+            // DOM elements
+            const timerDisplay = document.querySelector('.timer-circle');
+            const startBtn = document.querySelector('.start-btn');
+            const resetBtn = document.querySelector('.reset-btn');
+            const presetBtns = document.querySelectorAll('.preset-btn');
+            const statusDisplay = document.querySelector('.status');
+            const progressBar = document.querySelector('.progress-bar');
+            const modal = document.querySelector('.modal');
+            const closeModalBtn = document.querySelector('.close-modal');
+            const modalTitle = document.querySelector('.modal-title');
+            const modalMessage = document.querySelector('.modal-message');
+            const doodle = document.querySelector('.doodle');
+            const sessionCounter = document.querySelector('.session-counter');
             
-            // Clear existing numbers
-            clockNumbers.innerHTML = '';
+            // Timer variables
+            let timer;
+            let timeLeft = 0;
+            let totalTime = 0;
+            let isRunning = false;
+            let isWorkTime = true;
+            let currentPreset = '25-5';
+            let sessionsCompleted = 0;
             
-            numbers.forEach((num, index) => {
-                const number = document.createElement('div');
-                number.className = 'number';
-                number.textContent = num;
-                
-                const angle = (index * 30) * (Math.PI / 180);
-                const x = center + Math.sin(angle) * radius;
-                const y = center - Math.cos(angle) * radius;
-                
-                number.style.left = `${x}px`;
-                number.style.top = `${y}px`;
-                clockNumbers.appendChild(number);
+            // Preset configurations
+            const presets = {
+                '25-5': { work: 25 * 60, break: 5 * 60, sessions: 4 },
+                '30-10': { work: 30 * 60, break: 10 * 60, sessions: 4 },
+                '45-15': { work: 45 * 60, break: 15 * 60, sessions: 4 },
+                '1-1': { work: 1 * 60, break: 1 * 60, sessions: 4 }
+            };
+            
+            // Initialize timer with default preset
+            initTimer('25-5');
+            
+            // Event listeners
+            startBtn.addEventListener('click', toggleTimer);
+            resetBtn.addEventListener('click', resetTimer);
+            closeModalBtn.addEventListener('click', closeModal);
+            
+            presetBtns.forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const preset = this.dataset.preset;
+                    selectPreset(preset);
+                    resetTimer();
+                });
             });
-        }
-        
-        // Initialize
-        window.addEventListener('load', function() {
-            createClockNumbers();
-            updateDisplay();
-            updateClockVisuals();
-            highlightSelection(breakTime, workTime);
-            updateTimeLabels();
-        });
-        
-        // Handle window resize
-        window.addEventListener('resize', function() {
-            createClockNumbers();
-        });
-        
-        // Event listeners
-        playBtn.addEventListener('click', function() {
-            if (isRunning) {
-                pauseTimer();
-            } else {
-                startTimer();
-            }
-        });
-        
-        resetBtn.addEventListener('click', resetTimer);
-        
-        // Timer functions
-        function startTimer() {
-            if (isRunning) return;
             
-            isRunning = true;
-            playBtn.textContent = 'PAUSE ⏸';
-            
-            timerInterval = setInterval(function() {
-                remainingTime--;
-                totalSeconds++;
+            // Functions
+            function initTimer(preset) {
+                currentPreset = preset;
+                timeLeft = presets[preset].work;
+                totalTime = presets[preset].work;
+                isWorkTime = true;
                 updateDisplay();
-                updateClockAnimation();
-                updateClockHands();
+                updateStatus();
+                updateSessionCounter();
                 
-                if (remainingTime <= 0) {
-                    // Switch between work and break modes
-                    if (currentMode === 'work') {
-                        currentMode = 'break';
-                        remainingTime = breakTime * 60;
-                        modeDisplay.textContent = 'Break';
-                    } else {
-                        currentMode = 'work';
-                        remainingTime = workTime * 60;
-                        modeDisplay.textContent = 'Work';
+                // Update active preset button
+                presetBtns.forEach(btn => {
+                    btn.classList.remove('active');
+                    if (btn.dataset.preset === preset) {
+                        btn.classList.add('active');
                     }
-                    updateClockVisuals();
-                }
-            }, 1000);
-        }
-        
-        function pauseTimer() {
-            clearInterval(timerInterval);
-            isRunning = false;
-            playBtn.textContent = 'PLAY ▶';
-        }
-        
-        function resetTimer() {
-            pauseTimer();
-            currentMode = 'work';
-            modeDisplay.textContent = 'Work';
-            remainingTime = workTime * 60;
-            updateDisplay();
-            updateClockVisuals();
-            updateClockHands();
-        }
-        
-        function updateDisplay() {
-            const minutes = Math.floor(remainingTime / 60);
-            const seconds = remainingTime % 60;
-            timeDisplay.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
-        }
-        
-        function updateClockVisuals() {
-            // Clear existing divisions
-            document.querySelectorAll('.clock-division').forEach(el => el.remove());
-
-            const minutesPerDivision = 5;
-            const degreesPerMinute = 360 / 60; // 6 degrees per minute
-            const degreesPerDivision = minutesPerDivision * degreesPerMinute;
-
-            // Work time breakdown
-            const fullWorkDivs = Math.floor(workTime / minutesPerDivision);
-            const workRemainder = workTime % minutesPerDivision;
-
-            // Break time breakdown
-            const fullBreakDivs = Math.floor(breakTime / minutesPerDivision);
-            const breakRemainder = breakTime % minutesPerDivision;
-
-            const clock = document.querySelector('.clock');
-            let currentAngle = 0;
-
-            // Work full divisions
-            for (let i = 0; i < fullWorkDivs; i++) {
-                const division = document.createElement('div');
-                division.className = 'clock-division work-division';
-                division.style.transform = `rotate(${currentAngle}deg)`;
-                clock.appendChild(division);
-                currentAngle += degreesPerDivision;
+                });
             }
-
-            // Work partial division
-            if (workRemainder > 0) {
-                const partialAngle = workRemainder * degreesPerMinute;
-                const division = document.createElement('div');
-                division.className = 'clock-division work-division';
-                division.style.transform = `rotate(${currentAngle}deg)`;
-                division.style.clipPath = getClipPathForAngle(partialAngle);
-                clock.appendChild(division);
-                currentAngle += partialAngle;
-            }
-
-            // Break full divisions
-            for (let i = 0; i < fullBreakDivs; i++) {
-                const division = document.createElement('div');
-                division.className = 'clock-division break-division';
-                division.style.transform = `rotate(${currentAngle}deg)`;
-                clock.appendChild(division);
-                currentAngle += degreesPerDivision;
-            }
-
-            // Break partial division
-            if (breakRemainder > 0) {
-                const partialAngle = breakRemainder * degreesPerMinute;
-                const division = document.createElement('div');
-                division.className = 'clock-division break-division';
-                division.style.transform = `rotate(${currentAngle}deg)`;
-                division.style.clipPath = getClipPathForAngle(partialAngle);
-                clock.appendChild(division);
-                currentAngle += partialAngle;
-            }
-
-            // Show current mode sector (animated fill)
-            if (currentMode === 'work') {
-                workSector.style.opacity = '1';
-                breakSector.style.opacity = '0';
-            } else {
-                workSector.style.opacity = '0';
-                breakSector.style.opacity = '1';
-            }
-        }
-
-        // Helper to calculate clip-path for a given angle
-        function getClipPathForAngle(angleDeg) {
-            const angleRad = angleDeg * Math.PI / 180;
-            const x = 50 + 50 * Math.sin(angleRad);
-            const y = 50 - 50 * Math.cos(angleRad);
-            return `polygon(50% 50%, 50% 0%, ${x}% ${y}%)`;
-        }
-     
-        function updateClockAnimation() {
-            const total = currentMode === 'work' ? workTime * 60 : breakTime * 60;
-            const angle = 360 * (1 - (remainingTime / total));
             
-            if (currentMode === 'work') {
-                workSector.style.transform = `rotate(${angle}deg)`;
-            } else {
-                breakSector.style.transform = `rotate(${angle}deg)`;
-            }
-        }
-        
-           function updateClockHands() {
-    const elapsed = (currentMode === 'work' ? workTime * 60 : breakTime * 60) - remainingTime;
-
-    const seconds = elapsed % 60;
-    const minutes = Math.floor(elapsed / 60) % 60;
-    const hours = Math.floor(elapsed / 3600);
-
-    const secondsAngle = seconds * 6;         // 360 / 60
-    const minutesAngle = minutes * 6 + (seconds / 60) * 6; // smooth minute hand
-    const hoursAngle = (hours % 12) * 30 + (minutes / 60) * 30;
-
-    secondHand.style.transform = `rotate(${secondsAngle}deg)`;
-    minuteHand.style.transform = `rotate(${minutesAngle}deg)`;
-    hourHand.style.transform = `rotate(${hoursAngle}deg)`;
-}
-        
-
-       function selectRow(w, b) {
-            if (isRunning) return;
-
-            breakTime = b;
-            workTime = w;
-            remainingTime = workTime * 60;
-            currentMode = 'work';
-            modeDisplay.textContent = 'Work';
-            updateDisplay();
-            updateClockVisuals();
-            updateClockHands();
-            updateTimeLabels();
-
-            // Highlight selected option-btn
-            document.querySelectorAll('.option-btn').forEach(btn => btn.classList.remove('selected-row'));
-            const buttons = document.querySelectorAll('.option-btn');
-            buttons.forEach(btn => {
-                const work = btn.querySelector('.work-time')?.textContent;
-                const brk = btn.querySelector('.break-time')?.textContent;
-                if (parseInt(work) === w && parseInt(brk) === b) {
-                btn.classList.add('selected-row');
+            function toggleTimer() {
+                if (isRunning) {
+                    pauseTimer();
+                } else {
+                    startTimer();
                 }
-            });
             }
-        
-        function highlightSelection(b, w) {
-            // Remove selection from all rows
-            document.querySelectorAll('table tr').forEach(tr => tr.classList.remove('selected-row'));
             
-            // Find and highlight the matching row
-            document.querySelectorAll('table tr').forEach(tr => {
-                const tds = tr.querySelectorAll('td');
-                if (tds.length === 2 && Number(tds[0].innerText) === b && Number(tds[1].innerText) === w) {
-                    tr.classList.add('selected-row');
+            function startTimer() {
+                isRunning = true;
+                startBtn.textContent = 'Pause ‖';
+                timer = setInterval(updateTimer, 1000);
+                timerDisplay.classList.add('pulse');
+            }
+            
+            function pauseTimer() {
+                isRunning = false;
+                startBtn.textContent = 'Play ►';
+                clearInterval(timer);
+                timerDisplay.classList.remove('pulse');
+            }
+            
+            function resetTimer() {
+                pauseTimer();
+                initTimer(currentPreset);
+                progressBar.style.width = '0%';
+            }
+            
+            function updateTimer() {
+                timeLeft--;
+                updateDisplay();
+                updateProgress();
+                
+                if (timeLeft <= 0) {
+                    timerComplete();
                 }
-            });
-        }
+            }
+            
+            function timerComplete() {
+                clearInterval(timer);
+                isRunning = false;
+                startBtn.textContent = 'Start';
+                
+                if (isWorkTime) {
+                   
+                    // Switch to break time
+                    isWorkTime = false;
+                    timeLeft = presets[currentPreset].break;
+                    totalTime = presets[currentPreset].break;
+                    
+                    // Different doodles for different break lengths
+                    let doodleEmoji = "☕";
+                    if (currentPreset === "1-1") {
+                        doodleEmoji = "⏱️";
+                    }
+                    showModal("Time for a break!", "Great job! Take a well-deserved break.", doodleEmoji);
+                } else {
+                    // Break completed, switch to work time
+                    isWorkTime = true;
+                    timeLeft = presets[currentPreset].work;
+                    totalTime = presets[currentPreset].work;
+                    
+                    let doodleEmoji = "💪";
+                    if (currentPreset === "1-1") {
+                        doodleEmoji = "📝";
+                    }
+                    showModal("Back to work!", "Break's over! Time to focus again.", doodleEmoji);
+                }
+                
+                updateStatus();
+                updateDisplay();
+                progressBar.style.width = '0%';
+            }
+            
+            function updateDisplay() {
+                const minutes = Math.floor(timeLeft / 60);
+                const seconds = timeLeft % 60;
+                timerDisplay.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+                
+                // Update circle color based on work/break
+                if (isWorkTime) {
+                    timerDisplay.classList.add('work');
+                    timerDisplay.classList.remove('break');
+                } else {
+                    timerDisplay.classList.add('break');
+                    timerDisplay.classList.remove('work');
+                }
+            }
+            
+            function updateStatus() {
+                if (isWorkTime) {
+                    statusDisplay.textContent = "Time to focus!";
+                } else {
+                    statusDisplay.textContent = "Time for a break!";
+                }
+            }
+            
+            function updateProgress() {
+                const progress = ((totalTime - timeLeft) / totalTime) * 100;
+                progressBar.style.width = `${progress}%`;
+            }
+            
+            function selectPreset(preset) {
+                currentPreset = preset;
+                initTimer(preset);
+            }
+            
+            function updateSessionCounter() {
+                sessionCounter.textContent = `© 2025 Fullmoon`;
+            }
+            
+            function showModal(title, message, emoji) {
+                modalTitle.textContent = title;
+                modalMessage.textContent = message;
+                doodle.textContent = emoji;
+                modal.style.display = 'flex';
+            }
+            
+            function closeModal() {
+                modal.style.display = 'none';
+            }
+        });
